@@ -1,41 +1,46 @@
 <template>
     <div id="app">
 
+        <div class="hometab">
+            <a class="homebutton" href="/">Home</a>
+        </div>
         <header>
             <img src="/static/img/logo.png" alt="logo" style="margin: auto; display: block;"></header>
         <br>
         <br>
 
         <center>
-            <div class="greeting">Uploads up to 200 MB are allowed. You should <b>read the <a class="linkbutton"
-                 href="https://catbox.moe/faq.php">FAQ.</a></b>
-            </div>
+            <div class="greeting">Uploads up to 20 MB are allowed. thank you...</div>
         </center>
 
         <br>
         <br>
-
+        <!--style="border-color: rgb(35, 183, 72);"-->
         <center>
-            <form method="post" @click="trigger" enctype="multipart/form-data" class="dropzone dz-clickable"
+            <form method="post" @click="trigger"
+                  enctype="multipart/form-data"
+                  class="dropzone dz-clickable"
                   id="dropzoneUpload">
-                <input type="hidden" name="reqtype" value="fileupload">
-                <input type="hidden" name="userhash" value="">
                 <div class="dz-default dz-message"><span>Select or drop files</span></div>
-
-                <div v-for="item in fileArrays" class="dz-preview dz-file-preview dz-processing dz-success dz-complete"
-                     style="border-color: rgb(35, 183, 72);" @click.stop>
+                <div v-for="item in fileArrays" :key="item.url" class="dz-preview dz-file-preview dz-processing  dz-complete"
+                     :class="item.errmsg ? 'dz-error':'dz-success'"
+                     @click.stop>
                     <div class="dz-details">
                         <div class="dz-filename"><span data-dz-name="123123">{{item.name}}</span></div>
                         <div class="dz-size" data-dz-size="12313">
-                            <strong>{{item.size}}</strong>
+                            <strong>{{item.size.selectedSize}}</strong>{{item.size.selectedUnit}}
                         </div>
                     </div>
-                    <div class="dz-progress">
+                    <div class="dz-progress" v-if="!item.errmsg">
                         <span class="dz-upload" data-dz-uploadprogress=""
                               style="width: 100%; background-color: rgb(35, 183, 72);"></span>
                     </div>
-                    <div class="dz-error-message"><span data-dz-errormessage="1231321"></span></div>
-                    <div class="responseText">
+                    <div class="dz-error-message" v-if="item.errmsg">
+                        <span data-dz-errormessage="1231321">
+                        {{item.errmsg}}
+                        </span>
+                    </div>
+                    <div class="responseText" v-if="item.url">
                         <span class="textHolder" @click.stop="copy"
                               style="opacity: 1;">{{item.url}}</span>
                     </div>
@@ -56,7 +61,7 @@
 <script>
     import axios from 'axios'
     import stringRandom from 'string-random'
-    import {querySearch, queryStringify} from './components/utils'
+    import {querySearch, queryStringify, fileSize,grabTooBig} from './components/utils'
 
     export default {
         name: 'app',
@@ -74,12 +79,11 @@
             },
             copy: function (e) {
                 var oldText = e.target.innerText;
-                this.$copyText(this.result).then(function () {
-                    e.target.innerText = 'Copied!';
-                    setTimeout(function () {
-                        e.target.innerText = oldText;
-                    }, 1000);
-                }, function () {});
+                this.$copyText(oldText).then(function () {}, function () {});
+                e.target.innerText = 'Copied!';
+                setTimeout(function () {
+                    e.target.innerText = oldText;
+                }, 1000);
             },
             login: function () {
                 const clientID = '9ba42a30e49015b1f1dc';
@@ -140,34 +144,41 @@
                 const access_token = window.localStorage.getItem('access_token');
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = function (e) {
-                        const base64 = e.target.result;
-                        axios.put(url, {
-                            message: 'my commit message',
-                            content: btoa(base64),
-                            committer: {
-                                name: 'fuzhouxxdong',
-                                email: 'fuzhouxxdong@gmail.com'
-                            }
-                        }, {
-                            headers: {
-                                'Accept': 'application/json',
-                                Authorization: `token ${access_token}`
-                            }
-                        }).then(res => {
-                            if (res.data) {
-                                const result = {
-                                    name: file.name,
-                                    size: file.size,
-                                    url: res.data.content.download_url
-                                }
-                                thiz.fileArrays.push(result);
-                                thiz.fileArrays = thiz.fileArrays.reverse();
-                            }
-                        })
+                    const result = {
+                        name: file.name,
+                        size: fileSize(file.size),
                     }
+                    if (file.size > 20 * 1024 * 1024) {
+                        result.errmsg = grabTooBig();
+                        thiz.fileArrays.push(result);
+                        thiz.fileArrays = thiz.fileArrays.reverse();
+                    } else {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = function (e) {
+                            const base64 = e.target.result;
+                            axios.put(url, {
+                                message: 'my commit message',
+                                content: btoa(base64),
+                                committer: {
+                                    name: 'fuzhouxxdong',
+                                    email: 'fuzhouxxdong@gmail.com'
+                                }
+                            }, {
+                                headers: {
+                                    'Accept': 'application/json',
+                                    Authorization: `token ${access_token}`
+                                }
+                            }).then(res => {
+                                if (res.data) {
+                                    result.url = res.data.content.download_url;
+                                    thiz.fileArrays.push(result);
+                                    thiz.fileArrays = thiz.fileArrays.reverse();
+                                }
+                            })
+                        }
+                    }
+
                 }
 
             }
@@ -185,5 +196,6 @@
 </script>
 
 <style>
+
 
 </style>

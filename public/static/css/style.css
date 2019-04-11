@@ -681,7 +681,7 @@ div.dz-error-message {
 }
 
 div.dz-success {
-	border: 2px solid #FF5C5C;
+	border: 2px solid rgb(35, 183, 72);
 }
 
 div.dz-details {
