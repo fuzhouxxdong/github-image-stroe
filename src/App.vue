@@ -1,21 +1,52 @@
 <template>
     <div id="app">
 
-            <table class="table">
-                <tr>
-                    <td><input type="file" v-on:change="createFile"></td>
-                </tr>
-                <tr>
-                    <td>
-                        <a :href="loginLink" v-if="!isLogged">login</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <p>{{img}}</p>
-                    </td>
-                </tr>
-            </table>
+        <header>
+            <img src="/static/img/logo.png" alt="logo" style="margin: auto; display: block;"></header>
+        <br>
+        <br>
+
+        <center>
+            <div class="greeting">Uploads up to 200 MB are allowed. You should <b>read the <a class="linkbutton"
+                 href="https://catbox.moe/faq.php">FAQ.</a></b>
+            </div>
+        </center>
+
+        <br>
+        <br>
+
+        <center>
+            <form method="post" @click="trigger" enctype="multipart/form-data" class="dropzone dz-clickable"
+                  id="dropzoneUpload">
+                <input type="hidden" name="reqtype" value="fileupload">
+                <input type="hidden" name="userhash" value="">
+                <div class="dz-default dz-message"><span>Select or drop files</span></div>
+
+                <div v-for="item in fileArrays" class="dz-preview dz-file-preview dz-processing dz-success dz-complete"
+                     style="border-color: rgb(35, 183, 72);" @click.stop>
+                    <div class="dz-details">
+                        <div class="dz-filename"><span data-dz-name="123123">{{item.name}}</span></div>
+                        <div class="dz-size" data-dz-size="12313">
+                            <strong>{{item.size}}</strong>
+                        </div>
+                    </div>
+                    <div class="dz-progress">
+                        <span class="dz-upload" data-dz-uploadprogress=""
+                              style="width: 100%; background-color: rgb(35, 183, 72);"></span>
+                    </div>
+                    <div class="dz-error-message"><span data-dz-errormessage="1231321"></span></div>
+                    <div class="responseText">
+                        <span class="textHolder" @click.stop="copy"
+                              style="opacity: 1;">{{item.url}}</span>
+                    </div>
+                </div>
+            </form>
+        </center>
+
+        <!--<div class="notetiny" style="margin-top: 25px;">hello world</div>-->
+
+        <input type="file" ref="fileInput" accept="image/*" @change="createFile" multiple="multiple" class="dz-hidden-input"
+               style="visibility: hidden; position: absolute; top: 0px; left: 0px; height: 0px; width: 0px;">
 
     </div>
 
@@ -25,22 +56,31 @@
 <script>
     import axios from 'axios'
     import stringRandom from 'string-random'
-    import {
-        querySearch,
-        queryStringify
-    } from './components/utils'
+    import {querySearch, queryStringify} from './components/utils'
 
     export default {
         name: 'app',
         data: function () {
             return {
                 loginLink: 'Hello Vue!',
-                img: '',
-                isLogged: false
+                isLogged: false,
+                uploadFile: Object,
+                fileArrays: []
             }
         },
         methods: {
-
+            trigger: function () {
+                this.$refs.fileInput.click();
+            },
+            copy: function (e) {
+                var oldText = e.target.innerText;
+                this.$copyText(this.result).then(function () {
+                    e.target.innerText = 'Copied!';
+                    setTimeout(function () {
+                        e.target.innerText = oldText;
+                    }, 1000);
+                }, function () {});
+            },
             login: function () {
                 const clientID = '9ba42a30e49015b1f1dc';
                 const githubOauthUrl = 'http://github.com/login/oauth/authorize'
@@ -51,8 +91,7 @@
                 }
                 return `${githubOauthUrl}?${queryStringify(query)}`;
             },
-
-            test: function () {
+            token: function () {
                 const clientID = '9ba42a30e49015b1f1dc';
                 const clientSecret = '70df2bd365c472a5ecaf1b741685bd14a0c4973b';
                 const url = 'https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token';
@@ -100,28 +139,37 @@
                 const url = `https://api.github.com/repos/diycat/img/contents/${name}.jpg`;
                 const access_token = window.localStorage.getItem('access_token');
                 const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function (e) {
-                    const base64 = e.target.result;
-                    axios.put(url, {
-                        message: 'my commit message',
-                        content: btoa(base64),
-                        committer: {
-                            name: 'fuzhouxxdong',
-                            email: 'fuzhouxxdong@gmail.com'
-                        }
-                    }, {
-                        headers: {
-                            'Accept': 'application/json',
-                            Authorization: `token ${access_token}`
-                        }
-                    }).then(res => {
-                        if (res.data) {
-                            thiz.img = res.data.content.download_url;
-                        }
-                    })
+                if (file) {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = function (e) {
+                        const base64 = e.target.result;
+                        axios.put(url, {
+                            message: 'my commit message',
+                            content: btoa(base64),
+                            committer: {
+                                name: 'fuzhouxxdong',
+                                email: 'fuzhouxxdong@gmail.com'
+                            }
+                        }, {
+                            headers: {
+                                'Accept': 'application/json',
+                                Authorization: `token ${access_token}`
+                            }
+                        }).then(res => {
+                            if (res.data) {
+                                const result = {
+                                    name: file.name,
+                                    size: file.size,
+                                    url: res.data.content.download_url
+                                }
+                                thiz.fileArrays.push(result);
+                                thiz.fileArrays = thiz.fileArrays.reverse();
+                            }
+                        })
+                    }
                 }
+
             }
         },
         created() {
@@ -130,19 +178,12 @@
                 this.isLogged = true;
             } else {
                 this.isLogged = false;
-                this.test();
+                this.token();
             }
         }
     }
 </script>
 
 <style>
-    /*#app {*/
-        /*font-family: 'Avenir', Helvetica, Arial, sans-serif;*/
-        /*-webkit-font-smoothing: antialiased;*/
-        /*-moz-osx-font-smoothing: grayscale;*/
-        /*text-align: center;*/
-        /*color: #2c3e50;*/
-        /*margin-top: 60px;*/
-    /*}*/
+
 </style>
