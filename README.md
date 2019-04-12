@@ -34,7 +34,7 @@ exports.install = function (Vue) {
 yarn run serve
 ```
 
-效果[diycat](https://diycat.github.io)
+效果[diycat](https://diycat.github.io),上传的图片位置[img store](https://github.com/diycat/img)
 
 ### 构建项目
 ```
