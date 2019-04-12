@@ -1,7 +1,7 @@
 <template>
     <div id="app">
 
-        <a href="https://github.com/diycat" target="_blank">
+        <a href="https://github.com/fuzhouxxdong/github-image-stroe" target="_blank">
             <img width="149" height="149"
                  style="position: absolute; top: 0; right: 0; border: 0;z-index:999999999"
                  src="https://github.blog/wp-content/uploads/2008/12/forkme_right_red_aa0000.png?resize=149%2C149"
