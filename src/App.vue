@@ -162,8 +162,8 @@
                                 message: 'my commit message',
                                 content: btoa(base64),
                                 committer: {
-                                    name: this.github.name,
-                                    email: this.github.email
+                                    name: thiz.github.name,
+                                    email: thiz.github.email
                                 }
                             }, {
                                 headers: {
