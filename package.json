@@ -2,7 +2,9 @@
   "name": "diycat",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://github.com/diycat",
   "scripts": {
+    "d": "vcg --message='Update live demo' --branch=master --repo=https://github.com/diycat/diycat.github.io.git",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
@@ -32,7 +34,9 @@
       "plugin:vue/essential",
       "eslint:recommended"
     ],
-    "rules": {},
+    "rules": {
+      "no-console": "off"
+    },
     "parserOptions": {
       "parser": "babel-eslint"
     }

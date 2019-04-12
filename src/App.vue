@@ -1,16 +1,28 @@
 <template>
     <div id="app">
 
+        <a href="https://github.com/diycat" target="_blank">
+            <img width="149" height="149"
+                 style="position: absolute; top: 0; right: 0; border: 0;z-index:999999999"
+                 src="https://github.blog/wp-content/uploads/2008/12/forkme_right_red_aa0000.png?resize=149%2C149"
+                 class="attachment-full size-full"
+                 alt="Fork me on GitHub"
+                 data-recalc-dims="1">
+        </a>
+
         <div class="hometab">
             <a class="homebutton" href="/">Home</a>
         </div>
+
         <header>
-            <img src="/static/img/logo.png" alt="logo" style="margin: auto; display: block;"></header>
+            <img src="/static/img/logo.png" alt="logo" style="margin: auto; display: block;">
+        </header>
+
         <br>
         <br>
 
         <center>
-            <div class="greeting">Uploads up to 20 MB are allowed. thank you...</div>
+            <div class="greeting">Uploads up to 20 MB are allowed. thank you...<br>a simple img store</div>
         </center>
 
         <br>
@@ -22,7 +34,8 @@
                   class="dropzone dz-clickable"
                   id="dropzoneUpload">
                 <div class="dz-default dz-message"><span>Select or drop files</span></div>
-                <div v-for="item in fileArrays" :key="item.url" class="dz-preview dz-file-preview dz-processing  dz-complete"
+                <div v-for="item in fileArrays" :key="item.url"
+                     class="dz-preview dz-file-preview dz-processing  dz-complete"
                      :class="item.errmsg ? 'dz-error':'dz-success'"
                      @click.stop>
                     <div class="dz-details">
@@ -46,11 +59,17 @@
                     </div>
                 </div>
             </form>
+
         </center>
 
-        <!--<div class="notetiny" style="margin-top: 25px;">hello world</div>-->
+        <!--<div class="notetiny" style="margin-top: 25px;">a simple img store</div>-->
 
-        <input type="file" ref="fileInput" accept="image/*" @change="createFile" multiple="multiple" class="dz-hidden-input"
+        <input type="file"
+               ref="fileInput"
+               accept="image/*"
+               @change="createContents"
+               multiple="multiple"
+               class="dz-hidden-input"
                style="visibility: hidden; position: absolute; top: 0px; left: 0px; height: 0px; width: 0px;">
 
     </div>
@@ -61,15 +80,12 @@
 <script>
     import axios from 'axios'
     import stringRandom from 'string-random'
-    import {querySearch, queryStringify, fileSize,grabTooBig} from './components/utils'
+    import {fileSize, grabTooBig, querySearch, queryStringify} from './utils/utils'
 
     export default {
         name: 'app',
         data: function () {
             return {
-                loginLink: 'Hello Vue!',
-                isLogged: false,
-                uploadFile: Object,
                 fileArrays: []
             }
         },
@@ -79,14 +95,16 @@
             },
             copy: function (e) {
                 var oldText = e.target.innerText;
-                this.$copyText(oldText).then(function () {}, function () {});
+                this.$copyText(oldText).then(function () {
+                }, function () {
+                });
                 e.target.innerText = 'Copied!';
                 setTimeout(function () {
                     e.target.innerText = oldText;
                 }, 1000);
             },
-            login: function () {
-                const clientID = '9ba42a30e49015b1f1dc';
+            getAuthorize: function () {
+                const clientID = this.github.client_id;
                 const githubOauthUrl = 'http://github.com/login/oauth/authorize'
                 const query = {
                     client_id: clientID,
@@ -96,8 +114,8 @@
                 return `${githubOauthUrl}?${queryStringify(query)}`;
             },
             token: function () {
-                const clientID = '9ba42a30e49015b1f1dc';
-                const clientSecret = '70df2bd365c472a5ecaf1b741685bd14a0c4973b';
+                const clientID = this.github.client_id;
+                const clientSecret = this.github.client_secret;
                 const url = 'https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token';
                 const queryStr = querySearch();
                 if (queryStr.code) {
@@ -105,7 +123,6 @@
                     delete queryStr.code
                     const replacedUrl = `${window.location.origin}${window.location.pathname}${queryStringify(queryStr)}${window.location.hash}`
                     history.replaceState(null, null, replacedUrl)
-                    const thiz = this;
                     axios.post(url, {
                         code: code,
                         client_id: clientID,
@@ -117,30 +134,14 @@
                     }).then(res => {
                         if (res) {
                             window.localStorage.setItem('access_token', res.data.access_token);
-                            thiz.isLogged = true;
                         }
                     })
                 }
             },
-            issues: function () {
-                const url = 'https://api.github.com/repos/diycat/diycat.github.io/issues';
-                const access_token = window.localStorage.getItem('access_token');
-                axios.post(url, {
-                    title: 'Found a bug',
-                    body: 'I\'m having a problem with this.',
-                }, {
-                    headers: {
-                        'Accept': 'application/json',
-                        Authorization: `token ${access_token}`
-                    }
-                }).then(res => {
-                    alert(res)
-                })
-            },
-            createFile: function (e) {
+            createContents: function (e) {
                 var thiz = this;
                 const name = stringRandom();
-                const url = `https://api.github.com/repos/diycat/img/contents/${name}.jpg`;
+                const url = `https://api.github.com/repos/${this.github.owner}/${this.github.repos}/contents/${name}.jpg`;
                 const access_token = window.localStorage.getItem('access_token');
                 const file = e.target.files[0];
                 if (file) {
@@ -161,8 +162,8 @@
                                 message: 'my commit message',
                                 content: btoa(base64),
                                 committer: {
-                                    name: 'fuzhouxxdong',
-                                    email: 'fuzhouxxdong@gmail.com'
+                                    name: this.github.name,
+                                    email: this.github.email
                                 }
                             }, {
                                 headers: {
@@ -175,20 +176,28 @@
                                     thiz.fileArrays.push(result);
                                     thiz.fileArrays = thiz.fileArrays.reverse();
                                 }
-                            })
+                            }).catch(function (error) {
+                                if (error.response) {
+                                    if (error.response.status === 401) {
+                                        window.location.href = thiz.getAuthorize();
+                                    }
+                                    if (error.response.status === 404) {
+                                        result.errmsg = '哦买噶Der! 只有本人才能上传哦！！！！';
+                                        thiz.fileArrays.push(result);
+                                    }
+                                } else if (error.request) {
+                                    console.log(error.request);
+                                } else {
+                                    console.log('Error', error.message);
+                                }
+                            });
                         }
                     }
-
                 }
-
             }
         },
         created() {
-            this.loginLink = this.login();
-            if (localStorage.getItem('access_token')) {
-                this.isLogged = true;
-            } else {
-                this.isLogged = false;
+            if (!localStorage.getItem('access_token')) {
                 this.token();
             }
         }
