@@ -1,6 +1,6 @@
 # 一个hexo博客img store的简单解决方案
 
-[20190412140514.png](http://github.com/fuzhouxxdong/github-image-stroe/raw/master/screenshots/20190412140514.png)
+![20190412140514.png](http://github.com/fuzhouxxdong/github-image-stroe/raw/master/screenshots/20190412140514.png)
 
 ### 克隆项目
 
