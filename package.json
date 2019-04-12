@@ -4,7 +4,7 @@
   "private": true,
   "homepage": "https://github.com/diycat",
   "scripts": {
-    "d": "vcg --message='Update live demo' --branch=master --repo=https://github.com/diycat/diycat.github.io.git",
+    "deploy": "vcg --message='Update live demo' --branch=master --repo=https://github.com/diycat/diycat.github.io.git",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
